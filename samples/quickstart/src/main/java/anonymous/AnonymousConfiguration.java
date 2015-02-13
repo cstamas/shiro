@@ -17,7 +17,6 @@ import java.util.Set;
 
 import javax.annotation.concurrent.Immutable;
 
-import com.google.common.base.Strings;
 import org.apache.shiro.authz.Permission;
 import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.subject.SimplePrincipalCollection;
@@ -28,14 +27,32 @@ import org.apache.shiro.subject.SimplePrincipalCollection;
 @Immutable
 public class AnonymousConfiguration
 {
+  /**
+   * Is anonymous user support enabled?
+   */
   private final boolean enabled;
 
+  /**
+   * Can anonymous user create sessions? Overrides global shiro config, having false here will prevent session creation
+   * for anonymous users even if session creation is enabled at shiro level. It applies to anonymous (Shiro "guest")
+   * users only.
+   */
   private final boolean sessionCreationEnabled;
 
+  /**
+   * Principal to use for anonymous user, for example "anonymous" or any other principal will work.
+   */
   private final Object principal;
 
+  /**
+   * If not {@code null}, will "map" {@code principal} to given realm to perform authorization.
+   */
   private final String originatingRealm;
 
+  /**
+   * If not mapped to a realm, this is the set of roles anonymous will have, and based on these will permissions be
+   * resolved too.
+   */
   private final Set<String> roles;
 
   private final Set<Permission> permissions;
@@ -57,7 +74,8 @@ public class AnonymousConfiguration
       this.roles = roles;
       this.permissions = permissions;
 
-      this.principalCollection = new SimplePrincipalCollection(principal, originatingRealm == null ? "n/a" : originatingRealm);
+      this.principalCollection = new SimplePrincipalCollection(principal,
+          originatingRealm == null ? "n/a" : originatingRealm);
     }
     else {
       this.sessionCreationEnabled = true;
