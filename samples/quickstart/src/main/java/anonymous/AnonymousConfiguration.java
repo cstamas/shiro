@@ -57,7 +57,7 @@ public class AnonymousConfiguration
       this.roles = roles;
       this.permissions = permissions;
 
-      this.principalCollection = new SimplePrincipalCollection(principal, Strings.isNullOrEmpty(originatingRealm) ? "n/a" : originatingRealm);
+      this.principalCollection = new SimplePrincipalCollection(principal, originatingRealm == null ? "n/a" : originatingRealm);
     }
     else {
       this.sessionCreationEnabled = true;

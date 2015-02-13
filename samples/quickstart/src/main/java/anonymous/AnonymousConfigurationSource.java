@@ -57,6 +57,14 @@ public class AnonymousConfigurationSource
     this.principal = principal;
   }
 
+  public String getOriginatingRealm() {
+    return originatingRealm;
+  }
+
+  public void setOriginatingRealm(final String originatingRealm) {
+    this.originatingRealm = originatingRealm;
+  }
+
   public Set<String> getRoles() {
     return roles;
   }

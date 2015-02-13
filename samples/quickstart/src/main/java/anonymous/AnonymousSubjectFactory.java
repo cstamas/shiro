@@ -37,7 +37,8 @@ public class AnonymousSubjectFactory
   }
 
   @Override
-  public Subject createSubject(SubjectContext context) {
-    return new AnonymousSubject(anonymousConfigurationSource, permissionResolver, super.createSubject(context));
+  public Subject createSubject(final SubjectContext context) {
+    return new AnonymousSubject(anonymousConfigurationSource, context.resolveSecurityManager(), permissionResolver,
+        super.createSubject(context));
   }
 }

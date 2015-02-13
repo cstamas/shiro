@@ -23,6 +23,7 @@ import org.apache.shiro.authz.AuthorizationException;
 import org.apache.shiro.authz.Permission;
 import org.apache.shiro.authz.UnauthorizedException;
 import org.apache.shiro.authz.permission.PermissionResolver;
+import org.apache.shiro.mgt.SecurityManager;
 import org.apache.shiro.session.Session;
 import org.apache.shiro.subject.ExecutionException;
 import org.apache.shiro.subject.PrincipalCollection;
@@ -49,6 +50,8 @@ public class AnonymousSubject
 {
   private final AnonymousConfigurationSource anonymousConfigurationSource;
 
+  private final SecurityManager securityManager;
+
   private final PermissionResolver permissionResolver;
 
   private final Subject subject;
@@ -56,23 +59,30 @@ public class AnonymousSubject
   private AnonymousConfiguration anonymousConfiguration;
 
   public AnonymousSubject(final AnonymousConfigurationSource anonymousConfigurationSource,
+                          final SecurityManager securityManager,
                           final PermissionResolver permissionResolver,
                           final Subject subject)
   {
     this.anonymousConfigurationSource = checkNotNull(anonymousConfigurationSource);
-    this.subject = checkNotNull(subject);
+    this.securityManager = checkNotNull(securityManager);
     this.permissionResolver = checkNotNull(permissionResolver);
+    this.subject = checkNotNull(subject);
   }
 
   private boolean permitted(final Permission permission) {
-    if (!anonymousConfiguration.getPermissions().isEmpty()) {
-      for (Permission perm : anonymousConfiguration.getPermissions()) {
-        if (perm.implies(permission)) {
-          return true;
+    if (anonymousConfiguration.getOriginatingRealm() != null) {
+      return securityManager.isPermitted(getAnonymousPrincipals(), permission);
+    }
+    else {
+      if (!anonymousConfiguration.getPermissions().isEmpty()) {
+        for (Permission perm : anonymousConfiguration.getPermissions()) {
+          if (perm.implies(permission)) {
+            return true;
+          }
         }
       }
+      return false;
     }
-    return false;
   }
 
   private boolean permitted(final String permission) {
