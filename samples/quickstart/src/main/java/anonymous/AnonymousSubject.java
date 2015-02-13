@@ -260,7 +260,12 @@ public class AnonymousSubject
   @Override
   public boolean hasRole(final String roleIdentifier) {
     if (isAnonymous()) {
-      return anonymousConfiguration.getRoles().contains(roleIdentifier);
+      if (anonymousConfiguration.getOriginatingRealm() != null) {
+        return securityManager.hasRole(getAnonymousPrincipals(), roleIdentifier);
+      }
+      else {
+        return anonymousConfiguration.getRoles().contains(roleIdentifier);
+      }
     }
     else {
       return subject.hasRole(roleIdentifier);
