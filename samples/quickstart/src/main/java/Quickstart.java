@@ -17,6 +17,7 @@
  * under the License.
  */
 
+import anonymous.AnonymousSubject;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.*;
 import org.apache.shiro.config.IniSecurityManagerFactory;
@@ -71,6 +72,42 @@ public class Quickstart {
             log.info("Retrieved the correct value! [" + value + "]");
         }
 
+      // Try to do some stuff with anon set subject's session
+        if (currentUser instanceof AnonymousSubject) {
+          final AnonymousSubject anonymousSubject = (AnonymousSubject) currentUser;
+          anonymousSubject.setAnonymous();
+          // anon users does not have sessions!
+          Session anonSession = currentUser.getSession();
+          log.info("Session is {}", anonSession);
+          anonymousSubject.unsetAnonymous();
+        }
+
+        currentUser = SecurityUtils.getSubject();
+        log.info( "User '{}' authentication status: {}", currentUser.getPrincipal(), currentUser.isAuthenticated() );
+        if (currentUser instanceof AnonymousSubject) {
+          final AnonymousSubject anonymousSubject = (AnonymousSubject)currentUser;
+
+          log.info("subject is permitted anon:read = {}", currentUser.isPermitted("anon:read"));
+
+          anonymousSubject.setAnonymous();
+          log.info("AnonymousSubject '{}' isAnonymous: {}", anonymousSubject.getAnonymousPrincipals(),
+              ((AnonymousSubject) currentUser).isAnonymous());
+          log.info( "User '{}' authentication status: {}", currentUser.getPrincipal(), currentUser.isAuthenticated() );
+          log.info("subject is permitted anon:read = {}", currentUser.isPermitted("anon:read"));
+
+          anonymousSubject.unsetAnonymous();
+          log.info("AnonymousSubject '{}' isAnonymous: {}", anonymousSubject.getAnonymousPrincipals(),
+              ((AnonymousSubject) currentUser).isAnonymous());
+          log.info( "User '{}' authentication status: {}", currentUser.getPrincipal(), currentUser.isAuthenticated() );
+          log.info("subject is permitted anon:read = {}", currentUser.isPermitted("anon:read"));
+
+          anonymousSubject.setAnonymous();
+          log.info("AnonymousSubject '{}' isAnonymous: {}", anonymousSubject.getAnonymousPrincipals(),
+              ((AnonymousSubject) currentUser).isAnonymous());
+          log.info( "User '{}' authentication status: {}", currentUser.getPrincipal(), currentUser.isAuthenticated() );
+          log.info("subject is permitted anon:read = {}", currentUser.isPermitted("anon:read"));
+        }
+
         // let's login the current user so we can check against roles and permissions:
         if (!currentUser.isAuthenticated()) {
             UsernamePasswordToken token = new UsernamePasswordToken("lonestarr", "vespa");
@@ -120,6 +157,26 @@ public class Quickstart {
         //all done - log out!
         currentUser.logout();
 
-        System.exit(0);
+        if (currentUser instanceof AnonymousSubject) {
+          final AnonymousSubject anonymousSubject = (AnonymousSubject)currentUser;
+          log.info("AnonymousSubject '{}' isAnonymous: {}", anonymousSubject.getAnonymousPrincipals(),
+              ((AnonymousSubject) currentUser).isAnonymous());
+          log.info( "User '{}' authentication status: {}", currentUser.getPrincipal(), currentUser.isAuthenticated() );
+          log.info("subject is permitted anon:read = {}", currentUser.isPermitted("anon:read"));
+
+          anonymousSubject.setAnonymous();
+          log.info("AnonymousSubject '{}' isAnonymous: {}", anonymousSubject.getAnonymousPrincipals(),
+              ((AnonymousSubject) currentUser).isAnonymous());
+          log.info( "User '{}' authentication status: {}", currentUser.getPrincipal(), currentUser.isAuthenticated() );
+          log.info("subject is permitted anon:read = {}", currentUser.isPermitted("anon:read"));
+
+          anonymousSubject.unsetAnonymous();
+          log.info("AnonymousSubject '{}' isAnonymous: {}", anonymousSubject.getAnonymousPrincipals(),
+              ((AnonymousSubject) currentUser).isAnonymous());
+          log.info( "User '{}' authentication status: {}", currentUser.getPrincipal(), currentUser.isAuthenticated() );
+          log.info("subject is permitted anon:read = {}", currentUser.isPermitted("anon:read"));
+        }
+
+      System.exit(0);
     }
 }
