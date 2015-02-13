@@ -29,6 +29,8 @@ public class AnonymousConfigurationSource
 
   private String principal;
 
+  private String originatingRealm;
+
   private Set<String> roles;
 
   public boolean isEnabled() {
@@ -65,7 +67,7 @@ public class AnonymousConfigurationSource
 
   public AnonymousConfiguration getConfiguration() {
     // TODO: would resolve roles also into permissions, but for brewity now it's hardcoded
-    return new AnonymousConfiguration(enabled, sessionCreationEnabled, principal, roles,
+    return new AnonymousConfiguration(enabled, sessionCreationEnabled, principal, originatingRealm, roles,
         ImmutableSet.<Permission>of(new WildcardPermission("anon:read")));
   }
 }

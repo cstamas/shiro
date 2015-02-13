@@ -12,11 +12,15 @@
  */
 package anonymous;
 
+import java.util.Collections;
 import java.util.Set;
 
 import javax.annotation.concurrent.Immutable;
 
+import com.google.common.base.Strings;
 import org.apache.shiro.authz.Permission;
+import org.apache.shiro.subject.PrincipalCollection;
+import org.apache.shiro.subject.SimplePrincipalCollection;
 
 /**
  * Immutable configuration data, retrieved from some configuration source.
@@ -28,23 +32,42 @@ public class AnonymousConfiguration
 
   private final boolean sessionCreationEnabled;
 
-  private final String principal;
+  private final Object principal;
+
+  private final String originatingRealm;
 
   private final Set<String> roles;
 
   private final Set<Permission> permissions;
 
+  private final PrincipalCollection principalCollection;
+
   public AnonymousConfiguration(final boolean enabled,
                                 final boolean sessionCreationEnabled,
-                                final String principal,
+                                final Object principal,
+                                final String originatingRealm,
                                 final Set<String> roles,
                                 final Set<Permission> permissions)
   {
     this.enabled = enabled;
-    this.sessionCreationEnabled = sessionCreationEnabled;
-    this.principal = principal;
-    this.roles = roles;
-    this.permissions = permissions;
+    if (this.enabled) {
+      this.sessionCreationEnabled = sessionCreationEnabled;
+      this.principal = principal;
+      this.originatingRealm = originatingRealm;
+      this.roles = roles;
+      this.permissions = permissions;
+
+      this.principalCollection = new SimplePrincipalCollection(principal, Strings.isNullOrEmpty(originatingRealm) ? "n/a" : originatingRealm);
+    }
+    else {
+      this.sessionCreationEnabled = true;
+      this.principal = null;
+      this.originatingRealm = null;
+      this.roles = Collections.emptySet();
+      this.permissions = Collections.emptySet();
+
+      this.principalCollection = null;
+    }
   }
 
   public boolean isEnabled() {
@@ -55,8 +78,12 @@ public class AnonymousConfiguration
     return sessionCreationEnabled;
   }
 
-  public String getPrincipal() {
+  public Object getPrincipal() {
     return principal;
+  }
+
+  public String getOriginatingRealm() {
+    return originatingRealm;
   }
 
   public Set<String> getRoles() {
@@ -65,5 +92,9 @@ public class AnonymousConfiguration
 
   public Set<Permission> getPermissions() {
     return permissions;
+  }
+
+  public PrincipalCollection getPrincipalCollection() {
+    return principalCollection;
   }
 }

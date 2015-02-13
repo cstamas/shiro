@@ -24,6 +24,7 @@ import org.apache.shiro.config.IniSecurityManagerFactory;
 import org.apache.shiro.mgt.SecurityManager;
 import org.apache.shiro.session.Session;
 import org.apache.shiro.subject.Subject;
+import org.apache.shiro.subject.support.DisabledSessionException;
 import org.apache.shiro.util.Factory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,8 +78,11 @@ public class Quickstart {
           final AnonymousSubject anonymousSubject = (AnonymousSubject) currentUser;
           anonymousSubject.setAnonymous();
           // anon users does not have sessions!
-          Session anonSession = currentUser.getSession();
-          log.info("Session is {}", anonSession);
+          try {
+            Session anonSession = currentUser.getSession();
+          } catch (DisabledSessionException e) {
+            log.info("Session creation prevented:", e);
+          }
           anonymousSubject.unsetAnonymous();
         }
 

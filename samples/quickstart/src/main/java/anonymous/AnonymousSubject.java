@@ -15,7 +15,6 @@ package anonymous;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.Callable;
 
 import org.apache.shiro.authc.AuthenticationException;
@@ -27,8 +26,8 @@ import org.apache.shiro.authz.permission.PermissionResolver;
 import org.apache.shiro.session.Session;
 import org.apache.shiro.subject.ExecutionException;
 import org.apache.shiro.subject.PrincipalCollection;
-import org.apache.shiro.subject.SimplePrincipalCollection;
 import org.apache.shiro.subject.Subject;
+import org.apache.shiro.subject.support.DisabledSessionException;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -41,7 +40,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * entry, and {@link #unsetAnonymous()} on exit. This is the one and only place where casting of Subject is needed,
  * everything else works as usual.</li>
  * </ul>
- * This implementation does not change behaviour of any existing Shiro filter, but it makes possible to assign roles and
+ * This implementation does not change behaviour of any existing Shiro filter, but it makes possible to assign roles
+ * and
  * permissions to non-authenticated subjects.
  */
 public class AnonymousSubject
@@ -53,13 +53,7 @@ public class AnonymousSubject
 
   private final Subject subject;
 
-  private PrincipalCollection anonymousIdentity;
-
-  private boolean sessionCreationEnabled;
-
-  private Set<String> roles;
-
-  private Set<Permission> permissions;
+  private AnonymousConfiguration anonymousConfiguration;
 
   public AnonymousSubject(final AnonymousConfigurationSource anonymousConfigurationSource,
                           final PermissionResolver permissionResolver,
@@ -71,8 +65,8 @@ public class AnonymousSubject
   }
 
   private boolean permitted(final Permission permission) {
-    if (!permissions.isEmpty()) {
-      for (Permission perm : permissions) {
+    if (!anonymousConfiguration.getPermissions().isEmpty()) {
+      for (Permission perm : anonymousConfiguration.getPermissions()) {
         if (perm.implies(permission)) {
           return true;
         }
@@ -87,7 +81,7 @@ public class AnonymousSubject
 
   private void check(final Permission permission) throws AuthorizationException {
     if (!permitted(permission)) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException("Anonymous user does not have " + permission + " permission");
     }
   }
 
@@ -96,33 +90,28 @@ public class AnonymousSubject
   }
 
   private void reset() {
-    this.anonymousIdentity = null;
-    this.sessionCreationEnabled = true;
-    this.roles = null;
-    this.permissions = null;
+    this.anonymousConfiguration = null;
   }
 
   public void setAnonymous() {
+    // fetch configuration as subject instances are reused, so get current config always
     final AnonymousConfiguration configuration = anonymousConfigurationSource.getConfiguration();
     // remembered and authenticated users have principals, guard against both
     if (configuration.isEnabled() && subject.getPrincipals() == null) {
       subject.logout();
-      this.anonymousIdentity = new SimplePrincipalCollection(configuration.getPrincipal(), "n/a");
-      this.sessionCreationEnabled = configuration.isSessionCreationEnabled();
-      this.roles = configuration.getRoles();
-      this.permissions = configuration.getPermissions();
+      this.anonymousConfiguration = configuration;
     }
   }
 
   public void unsetAnonymous() {
-    if (anonymousIdentity != null) {
+    if (anonymousConfiguration != null) {
       subject.logout();
       reset();
     }
   }
 
   public boolean isAnonymous() {
-    return anonymousIdentity != null;
+    return anonymousConfiguration != null;
   }
 
   public Subject getSubject() {
@@ -131,7 +120,7 @@ public class AnonymousSubject
 
   public PrincipalCollection getAnonymousPrincipals() {
     if (isAnonymous()) {
-      return anonymousIdentity;
+      return anonymousConfiguration.getPrincipalCollection();
     }
     else {
       return null;
@@ -261,7 +250,7 @@ public class AnonymousSubject
   @Override
   public boolean hasRole(final String roleIdentifier) {
     if (isAnonymous()) {
-      return roles.contains(roleIdentifier);
+      return anonymousConfiguration.getRoles().contains(roleIdentifier);
     }
     else {
       return subject.hasRole(roleIdentifier);
@@ -301,7 +290,7 @@ public class AnonymousSubject
   public void checkRole(final String roleIdentifier) throws AuthorizationException {
     if (isAnonymous()) {
       if (!hasRole(roleIdentifier)) {
-        throw new UnauthorizedException("User does not have required role");
+        throw new UnauthorizedException("Anonymous user does not have " + roleIdentifier + " role");
       }
     }
     else {
@@ -350,12 +339,10 @@ public class AnonymousSubject
 
   @Override
   public Session getSession(final boolean create) {
-    if (isAnonymous()) {
-      return subject.getSession(sessionCreationEnabled && create);
+    if (create && anonymousConfiguration != null && !anonymousConfiguration.isSessionCreationEnabled()) {
+      throw new DisabledSessionException("Session creation for anonymous user disabled");
     }
-    else {
-      return subject.getSession(create);
-    }
+    return subject.getSession(create);
   }
 
   @Override
