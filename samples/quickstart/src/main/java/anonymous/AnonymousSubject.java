@@ -32,6 +32,18 @@ import org.apache.shiro.subject.Subject;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+/**
+ * Shiro subject implementation that is able to grant permissions to anonymous users (Shiro "guests"). To use this
+ * implementation, you need two things:
+ * <ul>
+ * <li>Register and use {@link AnonymousSubjectFactory} as global subject factory</li>
+ * <li>Add a filter to entry points (like servlet filter for webapps) where you call {@link #setAnonymous()} method on
+ * entry, and {@link #unsetAnonymous()} on exit. This is the one and only place where casting of Subject is needed,
+ * everything else works as usual.</li>
+ * </ul>
+ * This implementation does not change behaviour of any existing Shiro filter, but it makes possible to assign roles and
+ * permissions to non-authenticated subjects.
+ */
 public class AnonymousSubject
     implements Subject
 {
